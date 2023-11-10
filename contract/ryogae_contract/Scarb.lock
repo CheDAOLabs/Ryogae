@@ -2,5 +2,12 @@
 version = 1
 
 [[package]]
+name = "public_contract"
+version = "0.1.0"
+
+[[package]]
 name = "ryogae_contract"
 version = "0.1.0"
+dependencies = [
+ "public_contract",
+]

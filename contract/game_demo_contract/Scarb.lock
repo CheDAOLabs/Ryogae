@@ -4,3 +4,10 @@ version = 1
 [[package]]
 name = "game_demo_contract"
 version = "0.1.0"
+dependencies = [
+ "public_contract",
+]
+
+[[package]]
+name = "public_contract"
+version = "0.1.0"
