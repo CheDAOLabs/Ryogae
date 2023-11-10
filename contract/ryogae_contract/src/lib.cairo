@@ -180,9 +180,6 @@ mod Ryogae {
 
             let buyer: ContractAddress = starknet::get_caller_address();
 
-            erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
-                .approve(self.vault.read(), equipment.price);
-
             assert(
                 erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
                     .transfer_from(buyer, self.vault.read(), equipment.price),
