@@ -1,8 +1,9 @@
 use starknet::ContractAddress;
+use Ryogae::Equipment;
 
 #[starknet::interface]
 trait IRyogae<TContractState> {
-    fn query_equipment(self: @TContractState, id: u256);
+    fn query_equipment(self: @TContractState, id: u256) -> Equipment;
 
     fn publish_equipment(
         ref self: TContractState,
@@ -48,8 +49,8 @@ mod Ryogae {
 
     #[storage]
     struct Storage {
-        vault: ContractAddress,
         count: u256,
+        vault: ContractAddress,
         equipments: LegacyMap<u256, Equipment>,
     }
 
@@ -107,6 +108,12 @@ mod Ryogae {
     }
 
     #[external(v0)]
+    fn update_vault(ref self: ContractState, vault: ContractAddress) {
+        assert(self.count.read() == 0, '');
+        self.vault.write(vault);
+    }
+
+    #[external(v0)]
     impl RyogaeImpl of IRyogae<ContractState> {
         fn publish_equipment(
             ref self: ContractState,
@@ -136,14 +143,14 @@ mod Ryogae {
                 .write(
                     id,
                     Equipment {
-                        id,
-                        publisher,
+                        id: id,
+                        publisher: publisher,
                         // publish_time,
                         // validity_period,
-                        name,
-                        game,
-                        price,
-                        coin_address,
+                        name: name,
+                        game: game,
+                        price: price,
+                        coin_address: coin_address,
                         buyer: zeroable::Zeroable::zero(),
                         status: Status::Purchasable
                     }
@@ -172,6 +179,9 @@ mod Ryogae {
             assert_owner(@self, equipment.name, equipment.game, equipment.publisher);
 
             let buyer: ContractAddress = starknet::get_caller_address();
+
+            erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
+                .approve(self.vault.read(), equipment.price);
 
             assert(
                 erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
@@ -256,8 +266,8 @@ mod Ryogae {
             self.equipments.write(id, equipment);
         }
 
-        fn query_equipment(self: @ContractState, id: u256) {
-            let equipment: Equipment = assert_id(self, id);
+        fn query_equipment(self: @ContractState, id: u256) -> Equipment {
+            assert_id(self, id)
         }
     }
 
