@@ -2,10 +2,7 @@ use starknet::ContractAddress;
 
 #[starknet::interface]
 trait IRyogae<TContractState> {
-    // fn query_equipment(
-    //     self:@TContractState,
-    //     id_or_something: felt252
-    // );
+    fn query_equipment(self: @TContractState, id: u256);
 
     fn publish_equipment(
         ref self: TContractState,
@@ -257,6 +254,10 @@ mod Ryogae {
 
             equipment.status = Status::Closed;
             self.equipments.write(id, equipment);
+        }
+
+        fn query_equipment(self: @ContractState, id: u256) {
+            let equipment: Equipment = assert_id(self, id);
         }
     }
 

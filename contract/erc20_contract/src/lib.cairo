@@ -136,6 +136,11 @@ mod Coin {
         decrease_allowance(ref self, spender, subtractedValue)
     }
 
+    #[external(v0)]
+    fn mint(ref self: ContractState) {
+        self._mint(starknet::get_caller_address(), 1000000000000000000);
+    }
+
     //
     // Internal
     //
