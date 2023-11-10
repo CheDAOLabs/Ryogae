@@ -1,6 +1,3 @@
-mod check_owner_interface;
-mod erc20_interface;
-
 use starknet::ContractAddress;
 
 #[starknet::interface]
@@ -46,9 +43,10 @@ mod Ryogae {
 
     use core::starknet::event::EventEmitter;
     use starknet::ContractAddress;
-    use super::{
+    use super::{IRyogae, Errors};
+    use public_contract::{
         check_owner_interface::ICheckOwnerDispatcherTrait, erc20_interface::IERC20DispatcherTrait,
-        IRyogae, check_owner_interface, erc20_interface, Errors
+        check_owner_interface, erc20_interface
     };
 
     #[storage]
@@ -58,7 +56,7 @@ mod Ryogae {
         equipments: LegacyMap<u256, Equipment>,
     }
 
-    #[derive(Copy, Drop, Serde)]
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     struct Equipment {
         id: u256,
         //
@@ -77,7 +75,7 @@ mod Ryogae {
         status: Status,
     }
 
-    #[derive(Copy, Drop, Serde)]
+    #[derive(Copy, Drop, Serde, starknet::Store)]
     enum Status {
         Purchasable,
         Unpurchasable,
