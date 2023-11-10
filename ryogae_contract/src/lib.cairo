@@ -23,7 +23,7 @@ trait IRyogae<TContractState> {
 
     fn confirm_finish(ref self: TContractState, id: u256);
 
-    fn rollback_purchase_for_buyer(ref self: TContractState, id: u256);
+    fn rollback_purchase(ref self: TContractState, id: u256);
 
     fn unpublish_equipment(ref self: TContractState, id: u256);
 }
@@ -32,13 +32,19 @@ mod Errors {
     const EQUIPMENT_EXPIRED: felt252 = 'equipment expired';
     const INVALID_ID: felt252 = 'invalid id';
     const UNEXPECTED_OWNER: felt252 = 'unexpected owner';
+    const UNEXPECTED_BUYER: felt252 = 'unexpected buyer';
+    const TRANSFER_FAILED: felt252 = 'transfer failed';
+    const IS_NOT_ALLOWED_TO_UNPUBLISH: felt252 = 'is not allowed to unpublish';
+    const EQUIPMENT_IS_NOT_SOLD_YET: felt252 = 'equipment is not sold yet';
+    const EQUIPMENT_CAN_NOT_BE_PURCHASED: felt252 = 'equipment can not be purchased';
+    const NAME_CAN_NOT_BE_EMPTY: felt252 = 'name cannot be empty';
 }
 
 #[starknet::contract]
 mod Ryogae {
     // Ownable to do
-    // todo events, though it is not necessary
 
+    use core::starknet::event::EventEmitter;
     use starknet::ContractAddress;
     use super::{
         check_owner_interface::ICheckOwnerDispatcherTrait, erc20_interface::IERC20DispatcherTrait,
@@ -83,6 +89,28 @@ mod Ryogae {
         self.count.write(0);
     }
 
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        EquipmentPublished: EquipmentPublished
+    }
+
+    #[derive(Drop, starknet::Event)]
+    struct EquipmentPublished {
+        #[key]
+        id: u256,
+        #[key]
+        publisher: ContractAddress,
+        #[key]
+        name: felt252,
+        #[key]
+        game: ContractAddress,
+        #[key]
+        price: u256,
+        #[key]
+        coin_address: ContractAddress,
+    }
+
     #[external(v0)]
     impl RyogaeImpl of IRyogae<ContractState> {
         fn publish_equipment(
@@ -94,7 +122,7 @@ mod Ryogae {
             coin_address: ContractAddress
         ) -> u256 {
             // check name first
-            assert(name != '', 'name cannot be empty');
+            assert(name != '', Errors::NAME_CAN_NOT_BE_EMPTY);
 
             let publisher: ContractAddress = starknet::get_caller_address();
             let publish_time: u64 = starknet::get_block_timestamp();
@@ -103,7 +131,7 @@ mod Ryogae {
             // check the address supporting ERC-20 or not
             //
 
-            assert(check_owner(@self, name, game, publisher), 'not the owner');
+            assert_owner(@self, name, game, publisher);
 
             let id: u256 = self.count.read() + 1;
             self.count.write(id);
@@ -125,21 +153,21 @@ mod Ryogae {
                         status: Status::Purchasable
                     }
                 );
+            self.emit(EquipmentPublished { id, publisher, name, game, price, coin_address });
 
             id
         }
 
         fn buy_equipment(ref self: ContractState, id: u256) {
-            assert_id(@self, id);
+            let mut equipment: Equipment = assert_id(@self, id);
 
-            let mut equipment: Equipment = self.equipments.read(id);
             assert(
                 match equipment.status {
                     Status::Purchasable => true,
                     Status::Unpurchasable => false,
                     Status::Closed => false,
                 },
-                'equipment looks closed already'
+                Errors::EQUIPMENT_CAN_NOT_BE_PURCHASED
             );
             // assert(
             //     equipment.publish_time
@@ -153,7 +181,7 @@ mod Ryogae {
             assert(
                 erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
                     .transfer_from(buyer, self.vault.read(), equipment.price),
-                'transfer failed'
+                Errors::TRANSFER_FAILED
             );
 
             equipment.buyer = buyer;
@@ -163,16 +191,15 @@ mod Ryogae {
         }
 
         fn confirm_finish(ref self: ContractState, id: u256) {
-            assert_id(@self, id);
+            let mut equipment: Equipment = assert_id(@self, id);
 
-            let mut equipment: Equipment = self.equipments.read(id);
             assert(
                 match equipment.status {
                     Status::Purchasable => false,
                     Status::Unpurchasable => true,
                     Status::Closed => false,
                 },
-                'equipment is not sold yet'
+                Errors::EQUIPMENT_IS_NOT_SOLD_YET
             );
 
             assert_owner(@self, equipment.name, equipment.game, equipment.buyer);
@@ -180,7 +207,7 @@ mod Ryogae {
             assert(
                 erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
                     .transfer(equipment.publisher, equipment.price),
-                'transfer failed'
+                Errors::TRANSFER_FAILED
             );
 
             equipment.status = Status::Closed;
@@ -188,13 +215,56 @@ mod Ryogae {
             self.equipments.write(id, equipment);
         }
 
-        fn rollback_purchase_for_buyer(ref self: ContractState, id: u256) {}
+        fn rollback_purchase(ref self: ContractState, id: u256) {
+            let mut equipment: Equipment = assert_id(@self, id);
 
-        fn unpublish_equipment(ref self: ContractState, id: u256) {}
+            assert(
+                match equipment.status {
+                    Status::Purchasable => false,
+                    Status::Unpurchasable => true,
+                    Status::Closed => false,
+                },
+                Errors::EQUIPMENT_IS_NOT_SOLD_YET
+            );
+
+            let buyer: ContractAddress = starknet::get_caller_address();
+            assert(equipment.buyer == buyer, Errors::UNEXPECTED_BUYER);
+            assert_not_owner(@self, equipment.name, equipment.game, buyer);
+
+            assert(
+                erc20_interface::IERC20Dispatcher { contract_address: equipment.coin_address }
+                    .transfer(equipment.publisher, equipment.price),
+                Errors::TRANSFER_FAILED
+            );
+
+            equipment.status = Status::Purchasable;
+            equipment.buyer = zeroable::Zeroable::zero();
+
+            self.equipments.write(id, equipment);
+        }
+
+        fn unpublish_equipment(ref self: ContractState, id: u256) {
+            let mut equipment: Equipment = assert_id(@self, id);
+
+            assert(
+                match equipment.status {
+                    Status::Purchasable => true,
+                    Status::Unpurchasable => false,
+                    Status::Closed => false,
+                },
+                Errors::IS_NOT_ALLOWED_TO_UNPUBLISH
+            );
+
+            assert(equipment.publisher == starknet::get_caller_address(), Errors::UNEXPECTED_OWNER);
+
+            equipment.status = Status::Closed;
+            self.equipments.write(id, equipment);
+        }
     }
 
-    fn assert_id(self: @ContractState, id: u256) {
+    fn assert_id(self: @ContractState, id: u256) -> Equipment {
         assert(id <= self.count.read(), Errors::INVALID_ID);
+        self.equipments.read(id)
     }
 
     fn assert_owner(
@@ -203,9 +273,16 @@ mod Ryogae {
         assert(check_owner(self, name, game, owner), Errors::UNEXPECTED_OWNER);
     }
 
+    fn assert_not_owner(
+        self: @ContractState, name: felt252, game: ContractAddress, owner: ContractAddress
+    ) {
+        assert(!check_owner(self, name, game, owner), Errors::UNEXPECTED_OWNER);
+    }
+
     fn check_owner(
         self: @ContractState, name: felt252, game: ContractAddress, owner: ContractAddress
     ) -> bool {
-        check_owner_interface::ICheckOwnerDispatcher { contract_address: game }.check_owner(name, owner)
+        check_owner_interface::ICheckOwnerDispatcher { contract_address: game }
+            .check_owner(name, owner)
     }
 }
