@@ -4,6 +4,7 @@ version = "0.1.0"
 
 [dependencies]
 starknet = ">=2.3.0"
+public_contract = "../../public_contract"
 
 [[target.starknet-contract]]
 sierra = true
