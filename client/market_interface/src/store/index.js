@@ -1,9 +1,16 @@
 import {createStore} from 'vuex'
 import {connect} from "@argent/get-starknet";
-import {Contract, getChecksumAddress} from "starknet";
+import {CallData, Contract, getChecksumAddress} from "starknet";
 
-const market_contract_address = "0x076c2c12b6cd07f561c2b8f3578a705528acd9a96155a9841647f054bde79133";
-import contract_abi from "./market_abi.json";
+export const market_contract_address = "0x043f0c669118286410b6e3f5dbc4159f162f21c229be06ebfad69d7e1b366a2b";
+export const game_contract_address = "0x02a284ee5cc310ae2511ddd8f1a10b333cfd94279525737adb72c897f5d5d67b";
+export const coin_contract_address = "0x022dfc81fef882f1588aa8ab4dc3151c5a16debc8e9fc9284be3ae301da15c35";
+
+const decimal = 18;
+
+import market_contract_abi from "./market_abi.json";
+import game_contract_abi from "./game_abi.json";
+import coin_contract_abi from "./coin_abi.json";
 
 
 export default createStore({
@@ -11,10 +18,13 @@ export default createStore({
         wallet_address: "",
         provider: null,
         account: null,
-        contract: null,
+        game_contract: null,
+        coin_contract: null,
+        market_contract: null,
         visibleConfirmPage: false,
         visibleGamePage: false,
-        visiblePayPage: false
+        visiblePayPage: false,
+        page: "BUY"
     },
     getters: {},
     mutations: {
@@ -27,8 +37,14 @@ export default createStore({
         setProvider(state, value) {
             state.provider = value;
         },
-        setContract(state, value) {
-            state.contract = value
+        setMarketContract(state, value) {
+            state.market_contract = value;
+        },
+        setCoinContract(state, value) {
+            state.coin_contract = value;
+        },
+        setGameContract(state, value) {
+            state.game_contract = value;
         },
         setVisibleConfirmPage(state, value) {
             state.visibleConfirmPage = value
@@ -38,6 +54,9 @@ export default createStore({
         },
         setVisiblePayPage(state, value) {
             state.visiblePayPage = value
+        },
+        setPage(state, value) {
+            state.page = value
         },
     },
     actions: {
@@ -58,34 +77,122 @@ export default createStore({
             context.commit("setAccount", account);
             context.commit("setProvider", provider)
 
-            const contract = new Contract(contract_abi, market_contract_address, context.state.account);
+            const market_contract = new Contract(market_contract_abi, market_contract_address, context.state.account);
+            const coin_contract = new Contract(coin_contract_abi, coin_contract_address, context.state.account);
+            const game_contract = new Contract(game_contract_abi, game_contract_address, context.state.account);
 
-            context.commit("setContract", contract)
-
+            context.commit("setMarketContract", market_contract);
+            context.commit("setCoinContract", coin_contract);
+            context.commit("setGameContract", game_contract);
 
         },
         async query_equipment(context, id) {
-            return await context.state.contract.query_equipment(id);
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            try {
+                return await context.state.market_contract.query_equipment(id);
+            } catch (e) {
+                console.log(e);
+            }
         },
-        async publish_equipment(context, {name, game, price, coin_address}) {
-            let tx = await context.state.contract.publish_equipment(name, game, price, coin_address);
-            return tx;
+        async publish_equipment(context, {name, price}) {
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            try {
+                let tx = await context.state.market_contract.publish_equipment(name, game_contract_address, price, coin_contract_address);
+                return tx;
+            } catch (e) {
+                console.log(e);
+            }
         },
         async buy_equipment(context, id) {
-            let tx = await context.state.contract.buy_equipment(id);
-            return tx;
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            try {
+                let tx = await context.state.market_contract.buy_equipment(id);
+                return tx;
+            } catch (e) {
+                console.log(e);
+            }
         },
         async confirm_finish(context, id) {
-            let tx = await context.state.contract.confirm_finish(id);
-            return tx;
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            try {
+                let tx = await context.state.market_contract.confirm_finish(id);
+                return tx;
+            } catch (e) {
+                console.log(e);
+            }
         },
         async rollback_purchase(context, id) {
-            let tx = await context.state.contract.rollback_purchase(id);
-            return tx;
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            try {
+                let tx = await context.state.market_contract.rollback_purchase(id);
+                return tx;
+            } catch (e) {
+                console.log(e);
+            }
         },
         async unpublish_equipment(context, id) {
-            let tx = await context.state.contract.unpublish_equipment(id);
-            return tx;
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            try {
+                let tx = await context.state.market_contract.unpublish_equipment(id);
+                return tx;
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        async approve(context, price) {
+            try {
+                await this.state.coin_contract.approve(market_contract_address, price);
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        async multicall(context, {price, id}) {
+            if (context.state.account == null) {
+                await context.dispatch('connect_wallet');
+                return;
+            }
+            // let approve = {
+            //     contractAddress: coin_contract_address,
+            //     entrypoint: "approve",
+            //     calldata:
+            //         CallData.compile({
+            //             spender: market_contract_address,
+            //             amount:price
+            //         })
+            // };
+            // let buy = {
+            //     contractAddress: market_contract_address,
+            //     entrypoint: "buy_equipment",
+            //     calldata:
+            //         CallData.compile({
+            //             amount: {type: 'struct', low: id, high: '0'},
+            //         })
+            // }
+
+            // const tx = await context.state.account.execute(
+            //     [approve]
+            // )
+            //
+            // const receipt = await context.state.provider.waitForTransaction(tx.transaction_hash);
+            // console.log(receipt);
         }
     },
     modules: {}
