@@ -1,0 +1,69 @@
+[
+  {
+    "name": "CheckOwnerImpl",
+    "type": "impl",
+    "interface_name": "public_contract::check_owner_interface::ICheckOwner"
+  },
+  {
+    "name": "core::bool",
+    "type": "enum",
+    "variants": [
+      {
+        "name": "False",
+        "type": "()"
+      },
+      {
+        "name": "True",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "name": "public_contract::check_owner_interface::ICheckOwner",
+    "type": "interface",
+    "items": [
+      {
+        "name": "check_owner",
+        "type": "function",
+        "inputs": [
+          {
+            "name": "name",
+            "type": "core::felt252"
+          },
+          {
+            "name": "owner",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::bool"
+          }
+        ],
+        "state_mutability": "view"
+      }
+    ]
+  },
+  {
+    "name": "update_owner",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "core::felt252"
+      },
+      {
+        "name": "owner",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
+    "kind": "enum",
+    "name": "game_demo_contract::Game::Event",
+    "type": "event",
+    "variants": []
+  }
+]

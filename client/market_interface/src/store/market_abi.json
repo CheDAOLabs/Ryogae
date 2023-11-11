@@ -1,12 +1,12 @@
 [
   {
-    "type": "impl",
     "name": "RyogaeImpl",
+    "type": "impl",
     "interface_name": "ryogae_contract::IRyogae"
   },
   {
-    "type": "struct",
     "name": "core::integer::u256",
+    "type": "struct",
     "members": [
       {
         "name": "low",
@@ -19,24 +19,84 @@
     ]
   },
   {
-    "type": "interface",
+    "name": "ryogae_contract::Ryogae::Status",
+    "type": "enum",
+    "variants": [
+      {
+        "name": "Purchasable",
+        "type": "()"
+      },
+      {
+        "name": "Unpurchasable",
+        "type": "()"
+      },
+      {
+        "name": "Closed",
+        "type": "()"
+      }
+    ]
+  },
+  {
+    "name": "ryogae_contract::Ryogae::Equipment",
+    "type": "struct",
+    "members": [
+      {
+        "name": "id",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "publisher",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "name",
+        "type": "core::felt252"
+      },
+      {
+        "name": "game",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "price",
+        "type": "core::integer::u256"
+      },
+      {
+        "name": "coin_address",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "buyer",
+        "type": "core::starknet::contract_address::ContractAddress"
+      },
+      {
+        "name": "status",
+        "type": "ryogae_contract::Ryogae::Status"
+      }
+    ]
+  },
+  {
     "name": "ryogae_contract::IRyogae",
+    "type": "interface",
     "items": [
       {
-        "type": "function",
         "name": "query_equipment",
+        "type": "function",
         "inputs": [
           {
             "name": "id",
             "type": "core::integer::u256"
           }
         ],
-        "outputs": [],
+        "outputs": [
+          {
+            "type": "ryogae_contract::Ryogae::Equipment"
+          }
+        ],
         "state_mutability": "view"
       },
       {
-        "type": "function",
         "name": "publish_equipment",
+        "type": "function",
         "inputs": [
           {
             "name": "name",
@@ -63,8 +123,8 @@
         "state_mutability": "external"
       },
       {
-        "type": "function",
         "name": "buy_equipment",
+        "type": "function",
         "inputs": [
           {
             "name": "id",
@@ -75,8 +135,8 @@
         "state_mutability": "external"
       },
       {
-        "type": "function",
         "name": "confirm_finish",
+        "type": "function",
         "inputs": [
           {
             "name": "id",
@@ -87,8 +147,8 @@
         "state_mutability": "external"
       },
       {
-        "type": "function",
         "name": "rollback_purchase",
+        "type": "function",
         "inputs": [
           {
             "name": "id",
@@ -99,8 +159,8 @@
         "state_mutability": "external"
       },
       {
-        "type": "function",
         "name": "unpublish_equipment",
+        "type": "function",
         "inputs": [
           {
             "name": "id",
@@ -113,56 +173,68 @@
     ]
   },
   {
-    "type": "constructor",
     "name": "constructor",
+    "type": "constructor",
     "inputs": []
   },
   {
-    "type": "event",
-    "name": "ryogae_contract::Ryogae::EquipmentPublished",
+    "name": "update_vault",
+    "type": "function",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "core::starknet::contract_address::ContractAddress"
+      }
+    ],
+    "outputs": [],
+    "state_mutability": "external"
+  },
+  {
     "kind": "struct",
+    "name": "ryogae_contract::Ryogae::EquipmentPublished",
+    "type": "event",
     "members": [
       {
+        "kind": "key",
         "name": "id",
-        "type": "core::integer::u256",
-        "kind": "key"
+        "type": "core::integer::u256"
       },
       {
+        "kind": "key",
         "name": "publisher",
-        "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "type": "core::starknet::contract_address::ContractAddress"
       },
       {
+        "kind": "key",
         "name": "name",
-        "type": "core::felt252",
-        "kind": "key"
+        "type": "core::felt252"
       },
       {
+        "kind": "key",
         "name": "game",
-        "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "type": "core::starknet::contract_address::ContractAddress"
       },
       {
+        "kind": "key",
         "name": "price",
-        "type": "core::integer::u256",
-        "kind": "key"
+        "type": "core::integer::u256"
       },
       {
+        "kind": "key",
         "name": "coin_address",
-        "type": "core::starknet::contract_address::ContractAddress",
-        "kind": "key"
+        "type": "core::starknet::contract_address::ContractAddress"
       }
     ]
   },
   {
-    "type": "event",
-    "name": "ryogae_contract::Ryogae::Event",
     "kind": "enum",
+    "name": "ryogae_contract::Ryogae::Event",
+    "type": "event",
     "variants": [
       {
+        "kind": "nested",
         "name": "EquipmentPublished",
-        "type": "ryogae_contract::Ryogae::EquipmentPublished",
-        "kind": "nested"
+        "type": "ryogae_contract::Ryogae::EquipmentPublished"
       }
     ]
   }
