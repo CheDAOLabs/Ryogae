@@ -1,0 +1,169 @@
+[
+  {
+    "type": "impl",
+    "name": "RyogaeImpl",
+    "interface_name": "ryogae_contract::IRyogae"
+  },
+  {
+    "type": "struct",
+    "name": "core::integer::u256",
+    "members": [
+      {
+        "name": "low",
+        "type": "core::integer::u128"
+      },
+      {
+        "name": "high",
+        "type": "core::integer::u128"
+      }
+    ]
+  },
+  {
+    "type": "interface",
+    "name": "ryogae_contract::IRyogae",
+    "items": [
+      {
+        "type": "function",
+        "name": "query_equipment",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "view"
+      },
+      {
+        "type": "function",
+        "name": "publish_equipment",
+        "inputs": [
+          {
+            "name": "name",
+            "type": "core::felt252"
+          },
+          {
+            "name": "game",
+            "type": "core::starknet::contract_address::ContractAddress"
+          },
+          {
+            "name": "price",
+            "type": "core::integer::u256"
+          },
+          {
+            "name": "coin_address",
+            "type": "core::starknet::contract_address::ContractAddress"
+          }
+        ],
+        "outputs": [
+          {
+            "type": "core::integer::u256"
+          }
+        ],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "buy_equipment",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "confirm_finish",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "rollback_purchase",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      },
+      {
+        "type": "function",
+        "name": "unpublish_equipment",
+        "inputs": [
+          {
+            "name": "id",
+            "type": "core::integer::u256"
+          }
+        ],
+        "outputs": [],
+        "state_mutability": "external"
+      }
+    ]
+  },
+  {
+    "type": "constructor",
+    "name": "constructor",
+    "inputs": []
+  },
+  {
+    "type": "event",
+    "name": "ryogae_contract::Ryogae::EquipmentPublished",
+    "kind": "struct",
+    "members": [
+      {
+        "name": "id",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "publisher",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "name",
+        "type": "core::felt252",
+        "kind": "key"
+      },
+      {
+        "name": "game",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      },
+      {
+        "name": "price",
+        "type": "core::integer::u256",
+        "kind": "key"
+      },
+      {
+        "name": "coin_address",
+        "type": "core::starknet::contract_address::ContractAddress",
+        "kind": "key"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "ryogae_contract::Ryogae::Event",
+    "kind": "enum",
+    "variants": [
+      {
+        "name": "EquipmentPublished",
+        "type": "ryogae_contract::Ryogae::EquipmentPublished",
+        "kind": "nested"
+      }
+    ]
+  }
+]
