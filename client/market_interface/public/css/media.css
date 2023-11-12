@@ -71,4 +71,11 @@
 .alertContent .total {line-height: calc(83 / 992 * 100vw);border:none;background:url(../images/btns2.png) no-repeat center center;text-align:left;padding-left:calc(31 / 992 * 100vw);color:#fbe1bb;margin-bottom:calc(21 / 992 * 100vw);font-size: 14px;background-size:100% 100%;}
 .alertContent .btn {line-height: calc(83 / 992 * 100vw);border:none;background:url(../images/btns3.png) no-repeat center center;text-align:center;color:#000;width:100%;font-weight:bold;font-size: 14px;background-size:100% 100%;}
 
+
+.type2.alertContent .center{
+	width: 100%;
+	margin-right: 0px;
+	margin-bottom: 4vw;
+}
+
 }

@@ -1,40 +1,42 @@
 <template>
-  <div class="alertContent">
-    <div class="mask" @click="onClickClose"></div>
-    <div class="center" v-loading="loading">
-      <div class="imgbox"><img src="images/im1.png" alt=""></div>
-      <input v-if="order" type="text" class="words" placeholder="NAME" :value="decodeShortString(order.name)" disabled>
-      <input v-if="order" type="text" class="words" placeholder="PRICE" :value="order.price" disabled>
-      <button class="btn" @click="onClickConfirm">CONFIRM</button>
+  <div class="alertContent type2">
+    <div class="list">
+<!--      <div class="mask" @click="onClickClose"></div>-->
+      <div class="center" v-for="item in getMyOrder()" :key="item.title">
+        <div class="imgbox"><img src="images/im1.png" alt=""></div>
+        <input type="text" class="words" placeholder="NAME" :value="decodeShortString(item.name)" disabled>
+        <input type="text" class="words" placeholder="PRICE" :value="item.price" disabled>
+        <input type="text" class="words" placeholder="STATE" :value="item.stateString" disabled>
+        <button class="btn" @click="onClickConfirm(item)">CONFIRM</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import {mapActions, mapMutations} from "vuex";
+import {mapActions, mapMutations, mapState} from "vuex";
 import {shortString} from "starknet";
-
-const order_id = "0x07";
 
 export default {
   name: "ConfirmModal",
   data() {
     return {
       loading: true,
-      order: null
+      // order: null,
+      // items:[],
+      my_address: "",
     }
   },
+  computed: {
+    ...mapState([
+      'orderInfo', 'queryData', 'wallet_address'
+    ]),
+  },
   async mounted() {
-    this.loading = true;
-    try {
-      let order = await this.query_equipment(order_id);
-      console.log("order:", order);
-      this.order = order;
-      this.loading = false;
-    } catch (e) {
-      console.error(e);
-      this.setVisibleConfirmPage(false);
-    }
+    // this.order = this.orderInfo;
+    // this.items = this.queryData;
+    // console.log(this.items)
+    this.my_address = this.wallet_address;
   },
   methods: {
     ...mapActions([
@@ -46,11 +48,26 @@ export default {
     onClickClose() {
       this.setVisibleConfirmPage(false);
     },
-    async onClickConfirm() {
-      await this.confirm_finish(order_id);
+    async onClickConfirm(item) {
+      console.log(item)
+      await this.confirm_finish(item.id);
     },
     decodeShortString(str) {
       return shortString.decodeShortString(str);
+    },
+    getMyOrder() {
+      if (!this.queryData) {
+        return;
+      }
+      let res = [];
+      for (let i = 0; i < this.queryData.length; i++) {
+        let item = this.queryData[i];
+        if (item.stateString === 'Unpurchasable' && item.myOwn) {
+          res.push(item)
+        }
+      }
+      // console.log(res);
+      return res;
     }
   }
 }

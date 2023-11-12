@@ -1,35 +1,39 @@
 <template>
   <div>
-        <div class="test">
-    <!--      <Button @click="connect_wallet">{{ wallet_address ? wallet_address : "Connect Wallet" }}</Button>-->
-    <!--      <Button @click="onClickQueryEquipment">QueryEquipment</Button>-->
-    <!--      <Button @click="onClickPublishEquipment">PublishEquipment</Button>-->
-    <!--      <Button @click="onClickBuyEquipment">BuyEquipment</Button>-->
-    <!--      <Button @click="onClickConfirmFinish">ConfirmFinish</Button>-->
-    <!--      <Button @click="onClickRollbackPurchase">RollbackPurchase</Button>-->
-    <!--      <Button @click="onClickUnpublishEquipment">UnpublishEquipment</Button>-->
-    <!--      <Button @click="onClickShowConfirmPage">ShowConfrim</Button>-->
-    <!--      <button @click="onClickShowGamePage">ShowGame</button>-->
-    <!--      <button @click="onClickShowPayPage">ShowPay</button>-->
-          <Button @click="onEncodeString">EncodeString</Button>
-        </div>
+    <div class="test">
+      <!--      <Button @click="connect_wallet">{{ wallet_address ? wallet_address : "Connect Wallet" }}</Button>-->
+      <!--      <Button @click="onClickQueryEquipment">QueryEquipment</Button>-->
+      <!--      <Button @click="onClickPublishEquipment">PublishEquipment</Button>-->
+      <!-- <Button @click="onClickBuyEquipment">BuyEquipment</Button> -->
+      <!--      <Button @click="onClickConfirmFinish">ConfirmFinish</Button>-->
+      <!--      <Button @click="onClickRollbackPurchase">RollbackPurchase</Button>-->
+      <!--      <Button @click="onClickUnpublishEquipment">UnpublishEquipment</Button>-->
+      <!--      <Button @click="onClickShowConfirmPage">ShowConfrim</Button>-->
+      <!--      <button @click="onClickShowGamePage">ShowGame</button>-->
+      <!--      <button @click="onClickShowPayPage">ShowPay</button>-->
+       <!-- <Button @click="onEncodeString">EncodeString</Button>-->
+    </div>
 
     <div class="head">
       <div class="wrap">
         <div class="left">
           <a href="#"><img src="images/s1.png" alt=""></a>
-          <a href="#"><img src="images/s2.png" alt=""></a>
+          <a href="#"><img src="images/s2.png" alt="" @click="onClickGame"></a>
           <a href="#"><img src="images/s3.png" alt="" @click="onClickOrder"></a>
         </div>
         <div class="right">
-          <a href="#" class="a1" @click="connect_wallet">{{
-              wallet_address ? wallet_address.substring(0, 5) + "..." + wallet_address.substring(wallet_address.length - 5, wallet_address.length) : "Connect Wallet"
-            }}</a>
+          <!--          <a href="#" class="a1" @click="connect_wallet">{{-->
+          <!--              wallet_address ? wallet_address.substring(0, 5) + "..." + wallet_address.substring(wallet_address.length - 5, wallet_address.length) : "Connect Wallet"-->
+          <!--            }}</a>-->
           <div class="btns">
             <a href="#" @click="onClickBuy" :class="[{ 'page_off': this.page!=='BUY' }]">BUY</a>
             <a href="#" @click="onClickSell" :class="[{ 'page_off': this.page!=='SELL' }]">SELL</a>
           </div>
-          <a href="#" class="a2">Starknet</a>
+          <a href="#" class="a2" @click="connect_wallet">
+            {{
+              wallet_address ? wallet_address.substring(0, 4) + "..." + wallet_address.substring(wallet_address.length - 3, wallet_address.length) : "Connect"
+            }}
+          </a>
         </div>
       </div>
     </div>
@@ -37,7 +41,54 @@
     <div class="main">
       <div class="wrap">
         <div class="content">
-          <div class="items">
+          <div class="items" v-if="page=='BUY'">
+            <div class="item">
+              <div class="imgbox"><img src="images/img1.png" alt=""></div>
+              <!-- <div class="link">
+                <a href="#" @click="onClickWood">
+                  <span class="icon"><img src="images/im1.png" alt=""></span>
+                  <span class="title">WOOD</span>
+                </a>
+                <a href="#">
+                  <span class="icon"><img src="images/im1.png" alt=""></span>
+                  <span class="title">STONE</span>
+                </a>
+                <a href="#">
+                  <span class="icon"><img src="images/im1.png" alt=""></span>
+                  <span class="title">GOLD</span>
+                </a>
+              </div> -->
+              <div class="link scroll" style="height: 300px;">
+                <a href="#" v-if="queryData&&queryData?.length==0 || !queryData" class="none">???</a>
+
+                <a href="#" v-for="item in queryData" v-else :key="item.title" @click="onClickItem(item)">
+
+
+                  <span class="icon"><img src="images/im1.png" alt=""></span>
+                  <span class="title"
+                        style="width:40px; padding-left: 10px;"> {{ item.stateString == 'Purchasable' ? '✔️ ' : 'x' }}</span>
+                  <span class="title" style="width:60px;padding-left: 0;">id: {{ item.id }}</span>
+                  <span class="title" style="width:50px; padding-left: 0;"> {{ item.nameString }}</span>
+                  <span class="title" v-if="item &&item.myOwn" style="width:40px; padding-left: 0;">owen</span>
+
+                </a>
+
+              </div>
+            </div>
+            <div class="item">
+              <div class="imgbox"><img src="images/img2.png" alt=""></div>
+              <div class="link">
+                <a href="#" class="none">???</a>
+              </div>
+            </div>
+            <div class="item">
+              <div class="imgbox"><img src="images/img3.png" alt=""></div>
+              <div class="link">
+                <a href="#" class="none">???</a>
+              </div>
+            </div>
+          </div>
+          <div class="items" v-if="page=='SELL'">
             <div class="item">
               <div class="imgbox"><img src="images/img1.png" alt=""></div>
               <div class="link">
@@ -93,10 +144,11 @@ export default {
     return {}
   },
   mounted() {
+
   },
   computed: {
     ...mapState([
-      'wallet_address', 'provider', 'account', 'page',
+      'wallet_address', 'provider', 'account', 'page', 'queryData',
       'visibleConfirmPage', 'visibleGamePage', 'visiblePayPage'
     ]),
   },
@@ -104,10 +156,11 @@ export default {
     ...mapActions([
       'connect_wallet',
       'query_equipment',
+      'batch_query_equipment',
       'publish_equipment', 'buy_equipment', 'confirm_finish', 'rollback_purchase', 'unpublish_equipment'
     ]),
     ...mapMutations([
-      'setVisibleConfirmPage', 'setVisibleGamePage', 'setVisiblePayPage', 'setPage'
+      'setVisibleConfirmPage', 'setVisibleGamePage', 'setVisiblePayPage', 'setPage', 'setOrderInfo'
     ]),
     async onClickQueryEquipment() {
       let e = await this.query_equipment(1)
@@ -155,7 +208,28 @@ export default {
     onClickBuy() {
       this.setPage("BUY")
     },
+    async onClickItem(item) {
+
+      if (item.stateString != 'Purchasable') {
+        return
+      }
+
+
+      if (this.wallet_address === "") {
+        await this.connect_wallet()
+      }
+      if (this.page === 'BUY' && !item.myOwn) {
+        this.setVisiblePayPage(true)
+        this.setOrderInfo({...item})
+      }
+      if (this.page === 'SELL' && item.myOwn) {
+        this.setVisibleGamePage(true)
+        this.setOrderInfo({...item})
+      }
+    },
+
     async onClickWood() {
+
       if (this.wallet_address === "") {
         await this.connect_wallet()
       }
@@ -172,8 +246,11 @@ export default {
       }
       this.setVisibleConfirmPage(true)
     },
+    onClickGame() {
+      this.setVisibleConfirmPage(false);
+    },
     async onEncodeString() {
-      const name = 'abc';
+      const name = 'xxxx';
       const hex = shortString.encodeShortString(name);
       console.log("hex:", hex)
     }

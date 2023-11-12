@@ -2,9 +2,13 @@
   <div class="alertContent">
     <div class="mask" @click="onClickClose"></div>
     <div class="center" v-loading="loading">
+      <div v-if="order" type="text" class=""  style="color: white;position: absolute;left: 20px;top: 20px;font-size: 20px;">#{{ order.id }}</div>
+
       <div class="imgbox"><img src="images/im1.png" alt=""></div>
+
       <input v-if="order" type="text" class="words" placeholder="NAME" :value="decodeShortString(order.name)" disabled>
       <input v-if="order" type="text" class="words" placeholder="PRICE" :value="order.price" disabled>
+      <input v-if="order" type="text" class="words" placeholder="STATE" :value="order.stateString" disabled>
       <!--      <div class="total">TOTAL:00,000.00</div>-->
 
       <button class="btn" @click="OnClickApprove">APPROVE</button>
@@ -15,30 +19,28 @@
 </template>
 
 <script>
-import {mapActions, mapMutations} from "vuex";
+import {mapActions, mapMutations,mapState} from "vuex";
 import {shortString} from "starknet";
 
-const order_id = "0x07";
+// const order_id = "13";
 
 export default {
   name: "PayPage",
   data() {
     return {
-      loading: true,
+      loading: false,
       order: null
     }
   },
+  computed: {
+    ...mapState([
+      'orderInfo'
+    ]),
+  },
   async mounted() {
-    this.loading = true;
-    try {
-      let order = await this.query_equipment(order_id);
-      console.log("order:", order);
-      this.order = order;
-      this.loading = false;
-    } catch (e) {
-      console.error(e);
-      this.setVisiblePayPage(false);
-    }
+    this.order = this.orderInfo;
+
+  
   },
   methods: {
     ...mapActions([
@@ -52,7 +54,7 @@ export default {
       this.setVisiblePayPage(false);
     },
     async onClickPurchase() {
-      await this.buy_equipment(order_id);
+      await this.buy_equipment(this.order.id);
     },
     async OnClickApprove() {
       await this.approve(this.order.price);

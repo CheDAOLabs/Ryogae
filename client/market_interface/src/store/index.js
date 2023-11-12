@@ -1,6 +1,6 @@
-import {createStore} from 'vuex'
-import {connect} from "@argent/get-starknet";
-import {CallData, Contract, getChecksumAddress} from "starknet";
+import { createStore } from 'vuex'
+import { connect } from "@argent/get-starknet";
+import { CallData, Contract, getChecksumAddress,shortString } from "starknet";
 
 export const market_contract_address = "0x043f0c669118286410b6e3f5dbc4159f162f21c229be06ebfad69d7e1b366a2b";
 export const game_contract_address = "0x02a284ee5cc310ae2511ddd8f1a10b333cfd94279525737adb72c897f5d5d67b";
@@ -24,7 +24,9 @@ export default createStore({
         visibleConfirmPage: false,
         visibleGamePage: false,
         visiblePayPage: false,
-        page: "BUY"
+        page: "BUY",
+        queryData: null,
+        orderInfo:null
     },
     getters: {},
     mutations: {
@@ -58,6 +60,9 @@ export default createStore({
         setPage(state, value) {
             state.page = value
         },
+        setOrderInfo(state, value) {
+            state.orderInfo = value
+        },
     },
     actions: {
         async connect_wallet(context) {
@@ -85,6 +90,14 @@ export default createStore({
             context.commit("setCoinContract", coin_contract);
             context.commit("setGameContract", game_contract);
 
+
+            setTimeout(async () => {
+                const querydata = await context.dispatch("batch_query_equipment", 50)
+                console.log(querydata)
+            }, 1000);
+
+
+
         },
         async query_equipment(context, id) {
             if (context.state.account == null) {
@@ -97,7 +110,49 @@ export default createStore({
                 console.log(e);
             }
         },
-        async publish_equipment(context, {name, price}) {
+        async batch_query_equipment(context, maxId) {
+            const queryData = []
+
+            if (context.state.account == null) {
+                return;
+            }
+
+            function getEmptyObjectKey(obj) {
+                for (let key in obj) {
+                  if (JSON.stringify(obj[key]) === '{}') {
+                    return key;
+                  }
+                }
+              }
+
+            try {
+                await Promise.all(
+                    Array.from({ length: maxId }, async (v, i) => {
+                        try {
+                            const e = await context.state.market_contract.query_equipment(i);
+                            
+                            queryData.push({
+                                ...e,
+                                nameString:shortString.decodeShortString(e.name),
+                                stateString: getEmptyObjectKey(e.status.variant),
+                                myOwn:e.publisher==this.state.wallet_address
+                            })
+                        } catch (error) {
+                            // console.log(error)
+                        }
+
+                    })
+                );
+
+
+                this.state.queryData = queryData
+
+                return queryData
+            } catch (e) {
+                console.log(e);
+            }
+        },
+        async publish_equipment(context, { name, price }) {
             if (context.state.account == null) {
                 await context.dispatch('connect_wallet');
                 return;
@@ -128,6 +183,7 @@ export default createStore({
             }
             try {
                 let tx = await context.state.market_contract.confirm_finish(id);
+
                 return tx;
             } catch (e) {
                 console.log(e);
@@ -164,7 +220,7 @@ export default createStore({
                 console.log(e);
             }
         },
-        async multicall(context, {price, id}) {
+        async multicall(context, { price, id }) {
             if (context.state.account == null) {
                 await context.dispatch('connect_wallet');
                 return;
