@@ -24,15 +24,16 @@ trait IRyogae<TContractState> {
 }
 
 mod Errors {
-    const EQUIPMENT_EXPIRED: felt252 = 'equipment expired';
-    const INVALID_ID: felt252 = 'invalid id';
-    const UNEXPECTED_OWNER: felt252 = 'unexpected owner';
-    const UNEXPECTED_BUYER: felt252 = 'unexpected buyer';
-    const TRANSFER_FAILED: felt252 = 'transfer failed';
-    const IS_NOT_ALLOWED_TO_UNPUBLISH: felt252 = 'is not allowed to unpublish';
-    const EQUIPMENT_IS_NOT_SOLD_YET: felt252 = 'equipment is not sold yet';
-    const EQUIPMENT_CAN_NOT_BE_PURCHASED: felt252 = 'equipment can not be purchased';
-    const NAME_CAN_NOT_BE_EMPTY: felt252 = 'name cannot be empty';
+    const EQUIPMENT_EXPIRED: felt252 = 'Equipment expired';
+    const INVALID_ID: felt252 = 'Invalid id';
+    const UNEXPECTED_OWNER: felt252 = 'Unexpected owner';
+    const UNEXPECTED_BUYER: felt252 = 'Unexpected buyer';
+    const TRANSFER_FAILED: felt252 = 'Transfer failed';
+    const IS_NOT_ALLOWED_TO_UNPUBLISH: felt252 = 'It is not allowed to unpublish';
+    const EQUIPMENT_IS_NOT_SOLD_YET: felt252 = 'Equipment is not sold yet';
+    const EQUIPMENT_CAN_NOT_BE_PURCHASED: felt252 = 'Equipment can not be purchased';
+    const NAME_CAN_NOT_BE_EMPTY: felt252 = 'Name cannot be empty';
+    const NO_GAME_CHECKER: felt252 = 'There is no game checker yet';
 }
 
 #[starknet::contract]
@@ -40,7 +41,7 @@ mod Ryogae {
     // Ownable to do
 
     use core::starknet::event::EventEmitter;
-    use starknet::ContractAddress;
+    use starknet::{ContractAddress, SyscallResultTrait};
     use super::{IRyogae, Errors};
     use public_contract::{
         check_owner_interface::ICheckOwnerDispatcherTrait, erc20_interface::IERC20DispatcherTrait,
@@ -52,6 +53,7 @@ mod Ryogae {
         count: u256,
         vault: ContractAddress,
         equipments: LegacyMap<u256, Equipment>,
+        game_checker: LegacyMap<ContractAddress, ContractAddress>,
     }
 
     #[derive(Copy, Drop, Serde, starknet::Store)]
@@ -107,6 +109,7 @@ mod Ryogae {
         coin_address: ContractAddress,
     }
 
+    // starknet::get_contract_address()
     #[external(v0)]
     fn update_vault(ref self: ContractState, vault: ContractAddress) {
         assert(self.count.read() == 0, '');
@@ -171,11 +174,13 @@ mod Ryogae {
                 },
                 Errors::EQUIPMENT_CAN_NOT_BE_PURCHASED
             );
+            //
             // assert(
             //     equipment.publish_time
             //         + equipment.validity_period > starknet::get_block_timestamp(),
             //     Errors::EQUIPMENT_EXPIRED
             // );
+            //
             assert_owner(@self, equipment.name, equipment.game, equipment.publisher);
 
             let buyer: ContractAddress = starknet::get_caller_address();
@@ -285,10 +290,32 @@ mod Ryogae {
         assert(!check_owner(self, name, game, owner), Errors::UNEXPECTED_OWNER);
     }
 
+    fn assert_checker(self: @ContractState, game: ContractAddress) -> ContractAddress {
+        let game_checker: ContractAddress = self.game_checker.read(game);
+        assert(game_checker != zeroable::Zeroable::zero(), Errors::NO_GAME_CHECKER);
+        game_checker
+    }
+
+    #[external(v0)]
+    fn update_game_checker(
+        ref self: ContractState, game: ContractAddress, game_checker: ContractAddress
+    ) {
+        self.game_checker.write(game, game_checker);
+    }
+
+    #[external(v0)]
+    fn get_game_checker(self: @ContractState, game: ContractAddress) -> ContractAddress {
+        self.game_checker.read(game)
+    }
+
     fn check_owner(
         self: @ContractState, name: felt252, game: ContractAddress, owner: ContractAddress
     ) -> bool {
-        check_owner_interface::ICheckOwnerDispatcher { contract_address: game }
+        let game_checker: ContractAddress = assert_checker(self, game);
+
+        // the better way to do this is using LibraryDispatcher
+        // but counldn't define it through dynamic felt252 to get ClashHash
+        check_owner_interface::ICheckOwnerDispatcher { contract_address: game_checker }
             .check_owner(name, owner)
     }
 }
