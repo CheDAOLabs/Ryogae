@@ -69,7 +69,7 @@
                         style="width:40px; padding-left: 10px;"> {{ item.stateString == 'Purchasable' ? '✔️ ' : 'x' }}</span>
                   <span class="title" style="width:60px;padding-left: 0;">id: {{ item.id }}</span>
                   <span class="title" style="width:50px; padding-left: 0;"> {{ item.nameString }}</span>
-                  <span class="title" v-if="item &&item.myOwn" style="width:40px; padding-left: 0;">owen</span>
+                  <span class="title" v-if="item &&item.myOwn" style="width:40px; padding-left: 0;">owner</span>
 
                 </a>
 
