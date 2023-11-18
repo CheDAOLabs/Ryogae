@@ -120,7 +120,7 @@ mod Ryogae {
             assert(name != '', errors::NAME_CAN_NOT_BE_EMPTY);
 
             let publisher: ContractAddress = starknet::get_caller_address();
-            let publish_time: u64 = starknet::get_block_timestamp();
+            // let publish_time: u64 = starknet::get_block_timestamp();
 
             //
             // check the address supporting ERC-20 or not
